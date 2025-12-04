@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: filemanager-backend
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=sqlite:///./storage/database.db
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
+      - STORAGE_PATH=/app/storage
+      - CORS_ORIGINS=http://localhost:3000,http://localhost
+    volumes:
+      - ./backend/storage:/app/storage
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "8000:8000"
+    networks:
+      - filemanager
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: filemanager-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - filemanager
+    environment:
+      - VITE_API_URL=http://localhost:8000
+
+networks:
+  filemanager:
+    driver: bridge
+
+volumes:
+  storage:
+    driver: local
